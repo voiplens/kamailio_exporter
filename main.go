@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/angarium-cloud/kamailio_exporter/collector"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
@@ -116,7 +117,7 @@ func appAction(c *cli.Context) error {
 	}
 
 	// create a collector
-	collector, err := NewStatsCollector(c)
+	collector, err := collector.New(c)
 	if err != nil {
 		return err
 	}
@@ -131,7 +132,7 @@ func appAction(c *cli.Context) error {
              <head><title>Kamailio Exporter</title></head>
              <body>
 			 <p>This is a prometheus metric exporter for Kamailio.</p>
-			 <p>Browse <a href='` + metricsPath + `'>` + metricsPath + `</a> 
+			 <p>Browse <a href='` + metricsPath + `'>` + metricsPath + `</a>
 			 to get the metrics.</p>
              </body>
              </html>`))

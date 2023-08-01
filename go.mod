@@ -1,4 +1,4 @@
-module github.com/pascomnet/kamailio_exporter
+module github.com/angarium-cloud/kamailio_exporter
 
 go 1.18
 

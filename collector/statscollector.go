@@ -19,7 +19,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
-package main
+package collector
 
 import (
 	"fmt"
@@ -210,7 +210,7 @@ type StatsCollector struct {
 }
 
 // produce a new StatsCollector object
-func NewStatsCollector(cliContext *cli.Context) (*StatsCollector, error) {
+func New(cliContext *cli.Context) (*StatsCollector, error) {
 
 	// fill the Collector struct
 	collector := &StatsCollector{
