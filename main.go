@@ -28,122 +28,103 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/alecthomas/kingpin/v2"
 	"github.com/angarium-cloud/kamailio_exporter/collector"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promlog/flag"
+	"github.com/prometheus/common/version"
+	"github.com/prometheus/exporter-toolkit/web"
+	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
 )
+
+func init() {
+	prometheus.MustRegister(version.NewCollector("kamailio_exporter"))
+}
 
 var Version string
 
 func main() {
-	app := cli.NewApp()
-	app.Name = "Kamailio exporter"
-	app.Usage = "Expose Kamailio statistics as http endpoint for prometheus."
-	app.Version = Version
-	// define cli flags
-	app.Flags = []cli.Flag{
-		cli.BoolFlag{
-			Name:   "debug",
-			Usage:  "Enable debug logging",
-			EnvVar: "DEBUG",
-		},
-		cli.StringFlag{
-			Name:   "socketPath",
-			Value:  "/var/run/kamailio/kamailio_ctl",
-			Usage:  "Path to Kamailio unix domain socket",
-			EnvVar: "SOCKET_PATH",
-		},
-		cli.StringFlag{
-			Name:   "host",
-			Usage:  "Kamailio ip or hostname. Domain socket is used if no host is defined.",
-			EnvVar: "HOST",
-		},
-		cli.IntFlag{
-			Name:   "port",
-			Value:  3012,
-			Usage:  "Kamailio port",
-			EnvVar: "PORT",
-		},
-		cli.StringFlag{
-			Name:   "bindIp",
-			Value:  "0.0.0.0",
-			Usage:  "Listen on this ip for scrape requests",
-			EnvVar: "BIND_IP",
-		},
-		cli.IntFlag{
-			Name:   "bindPort",
-			Value:  9494,
-			Usage:  "Listen on this port for scrape requests",
-			EnvVar: "BIND_PORT",
-		},
-		cli.StringFlag{
-			Name:   "metricsPath",
-			Value:  "/metrics",
-			Usage:  "The http scrape path",
-			EnvVar: "METRICS_PATH",
-		},
-		cli.StringFlag{
-			Name:   "rtpmetricsPath",
-			Value:  "",
-			Usage:  "The http scrape path for rtpengine metrics",
-			EnvVar: "RTPMETRICS_PATH",
-		},
-		cli.StringFlag{
-			Name:   "customKamailioMetricsURL",
-			Value:  "",
-			Usage:  "URL to request user defined metrics from kamailio",
-			EnvVar: "CUSTOM_KAMAILIO_METRICS_URL",
-		},
-	}
-	app.Action = appAction
-	// then start the application
-	err := app.Run(os.Args)
+	var (
+		metricsPath = kingpin.Flag(
+			"web.telemetry-path",
+			"Path under which to expose metrics.",
+		).Default("/metrics").String()
+		rtpmetricsPath = kingpin.Flag(
+			"web.rtp-telemetry-path",
+			"Path under which to expose rtpengine metrics.",
+		).Default("").String()
+		socketPath = kingpin.Flag(
+			"kamailio.socket-path",
+			"Path to Kamailio unix domain socket",
+		).Default("/var/run/kamailio/kamailio_ctl").String()
+		host = kingpin.Flag(
+			"kamailio.rpc-host",
+			`URI of Kamailio RPC endpoint. Example: "tcp://localhost:3012"`,
+		).Default("").String()
+		port = kingpin.Flag(
+			"kamailio.rpc-port",
+			`URI of Kamailio RPC endpoint. Example: "tcp://localhost:3012"`,
+		).Default("3012").Int()
+		customMetricsURL = kingpin.Flag(
+			"kamailio.custom-metrics-url",
+			"URL to request user defined metrics from kamailio",
+		).Default("").String()
+		// rpcURI = kingpin.Flag(
+		// 	"kamailio.rpc-uri",
+		// 	`URI of Kamailio RPC endpoint. Example: "tcp://localhost:3012"`,
+		// ).Default("").String()
+		toolkitFlags = webflag.AddFlags(kingpin.CommandLine, ":9494")
+	)
+
+	promlogConfig := &promlog.Config{}
+	flag.AddFlags(kingpin.CommandLine, promlogConfig)
+	kingpin.Version(version.Print("freeswitch_exporter"))
+	kingpin.Parse()
+	logger := promlog.New(promlogConfig)
+
+	level.Info(logger).Log("msg", "Starting freeswitch_exporter", "version", version.Info())
+	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
+
+	c, err := collector.New(*socketPath, *host, *port, logger)
+
 	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// start the application
-func appAction(c *cli.Context) error {
-	log.Info("Starting kamailio exporter")
-
-	if c.Bool("debug") {
-		log.SetLevel(log.DebugLevel)
-		log.Debug("Debug logging is enabled")
+		panic(err)
 	}
 
-	// create a collector
-	collector, err := collector.New(c)
-	if err != nil {
-		return err
-	}
-	// and register it in prometheus API
-	prometheus.MustRegister(collector)
+	prometheus.MustRegister(c)
 
-	metricsPath := c.String("metricsPath")
-	listenAddress := fmt.Sprintf("%s:%d", c.String("bindIp"), c.Int("bindPort"))
-	// wire "/" to return some helpful info
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`<html>
-             <head><title>Kamailio Exporter</title></head>
-             <body>
-			 <p>This is a prometheus metric exporter for Kamailio.</p>
-			 <p>Browse <a href='` + metricsPath + `'>` + metricsPath + `</a>
-			 to get the metrics.</p>
-             </body>
-             </html>`))
-	})
-	rtpmetricsPath := c.String("rtpmetricsPath")
-	if rtpmetricsPath != "" {
-		log.Info("Enabling rtp metrics @", rtpmetricsPath)
-		http.HandleFunc(rtpmetricsPath, func(w http.ResponseWriter, r *http.Request) {
+	http.Handle(*metricsPath, promhttp.Handler())
+	if *metricsPath != "/" && *metricsPath != "" {
+		landingConfig := web.LandingConfig{
+			Name:        "FreeSWITCH Exporter",
+			Description: "Prometheus Exporter for FreeSWITCH servers",
+			Version:     version.Info(),
+			Links: []web.LandingLinks{
+				{
+					Address: *metricsPath,
+					Text:    "Metrics",
+				},
+			},
+		}
+		landingPage, err := web.NewLandingPage(landingConfig)
+		if err != nil {
+			level.Error(logger).Log("err", err)
+			os.Exit(1)
+		}
+		http.Handle("/", landingPage)
+	}
+	if *rtpmetricsPath != "" {
+		level.Info(logger).Log("msg", "Enabling rtp metrics", "path", rtpmetricsPath)
+		http.HandleFunc(*rtpmetricsPath, func(w http.ResponseWriter, r *http.Request) {
 			resp, err := http.Get("http://127.0.0.1:9901/metrics")
 			if err != nil {
-				log.Error(err)
+				level.Warn(logger).Log("err", err)
 				http.Error(w,
 					fmt.Sprintf("Failed to connect to rtpengine: %s", err.Error()),
 					http.StatusServiceUnavailable)
@@ -152,7 +133,7 @@ func appAction(c *cli.Context) error {
 			defer resp.Body.Close()
 			resp2, err := io.ReadAll(resp.Body)
 			if err != nil {
-				log.Error(err)
+				level.Warn(logger).Log("err", err)
 				http.Error(w,
 					fmt.Sprintf("Failed to read response from rtpengine: %s", err.Error()),
 					http.StatusInternalServerError)
@@ -162,33 +143,34 @@ func appAction(c *cli.Context) error {
 		})
 	}
 
-	if customMetricsURL := c.String("customKamailioMetricsURL"); customMetricsURL != "" {
-		http.Handle(metricsPath, handlerWithUserDefinedMetrics(customMetricsURL))
+	if *customMetricsURL != "" {
+		http.Handle(*metricsPath, handlerWithUserDefinedMetrics(*customMetricsURL, logger))
 	} else {
-		http.Handle(metricsPath, promhttp.Handler())
+		http.Handle(*metricsPath, promhttp.Handler())
 	}
-
-	// start http server
-	log.Info("Listening on ", listenAddress, metricsPath)
-	return http.ListenAndServe(listenAddress, nil)
+	server := &http.Server{}
+	if err := web.ListenAndServe(server, toolkitFlags, logger); err != nil {
+		level.Info(logger).Log("err", err)
+		os.Exit(1)
+	}
 }
 
 // Request user defined metrics and parse them into proper data objects
-func gatherUserDefinedMetrics(url string) ([]*dto.MetricFamily, error) {
+func gatherUserDefinedMetrics(url string, logger log.Logger) ([]*dto.MetricFamily, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Error("Failed to query kamailio user defined metrics", err)
+		level.Error(logger).Log("msg", "Failed to query kamailio user defined metrics", "err", err)
 		return nil, err
 	} else if resp.StatusCode != http.StatusOK {
 		resp.Body.Close()
-		log.Errorf("Requesting user defined kamailio metrics returned status code: %v", resp.StatusCode)
+		level.Error(logger).Log("msg", "Requesting user defined kamailio metrics returned status code", "status", resp.StatusCode)
 		return nil, err
 	}
 
 	defer resp.Body.Close()
 	respBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Error("Failed to read kamailio user defined metrics", err)
+		level.Error(logger).Log("msg", "Failed to read kamailio user defined metrics", "err", err)
 		return nil, err
 	}
 
@@ -206,15 +188,15 @@ func gatherUserDefinedMetrics(url string) ([]*dto.MetricFamily, error) {
 	return result, nil
 }
 
-func handlerWithUserDefinedMetrics(userDefinedMetricsURL string) http.Handler {
+func handlerWithUserDefinedMetrics(userDefinedMetricsURL string, logger log.Logger) http.Handler {
 	gatherer := func() ([]*dto.MetricFamily, error) {
 		ours, err := prometheus.DefaultGatherer.Gather()
 		if err != nil {
 			return ours, err
 		}
-		theirs, err := gatherUserDefinedMetrics(userDefinedMetricsURL)
+		theirs, err := gatherUserDefinedMetrics(userDefinedMetricsURL, logger)
 		if err != nil {
-			log.Error("Scraping user defined metrics failed", err)
+			level.Error(logger).Log("msg", "Scraping user defined metrics failed", "err", err)
 			return ours, nil
 		}
 		return append(ours, theirs...), nil

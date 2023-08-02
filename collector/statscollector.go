@@ -28,9 +28,9 @@ import (
 	"strings"
 
 	binrpc "github.com/florentchauveau/go-kamailio-binrpc/v3"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/urfave/cli.v1"
 )
 
 // declare a series of prometheus metric descriptions
@@ -203,21 +203,20 @@ type PkgStatsEntry struct {
 
 // the actual Collector object
 type StatsCollector struct {
-	cliContext   *cli.Context
 	socketPath   string
 	kamailioHost string
 	kamailioPort int
+	logger       log.Logger
 }
 
 // produce a new StatsCollector object
-func New(cliContext *cli.Context) (*StatsCollector, error) {
-
+func New(socketPath string, host string, port int, logger log.Logger) (*StatsCollector, error) {
 	// fill the Collector struct
 	collector := &StatsCollector{
-		cliContext:   cliContext,
-		socketPath:   cliContext.String("socketPath"),
-		kamailioHost: cliContext.String("host"),
-		kamailioPort: cliContext.Int("port"),
+		socketPath:   socketPath,
+		kamailioHost: host,
+		kamailioPort: port,
+		logger:       logger,
 	}
 
 	// fine, return the created object struct
@@ -243,15 +242,15 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	var err error
 	var conn net.Conn
 	if c.kamailioHost == "" {
-		log.Debug("Requesting stats from kamailio via domain socket ", c.socketPath)
+		level.Debug(c.logger).Log("msg", "Requesting stats from kamailio via domain socket", "addr", c.socketPath)
 		conn, err = net.Dial("unix", c.socketPath)
 	} else {
 		address := fmt.Sprintf("%s:%d", c.kamailioHost, c.kamailioPort)
-		log.Debug("Requesting stats from kamailio via binrpc ", address)
+		level.Debug(c.logger).Log("msg", "Requesting stats from kamailio via binrpc", "addr", address)
 		conn, err = net.Dial("tcp", address)
 	}
 	if err != nil {
-		log.Error("Can not connect to kamailio: ", err)
+		level.Error(c.logger).Log("msg", "Can not connect to kamailio", "err", err)
 		return
 	}
 
@@ -262,7 +261,7 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	// WritePacket returns the cookie generated
 	cookie, err := binrpc.WritePacket(conn, "stats.fetch", "all")
 	if err != nil {
-		log.Error("Can not request stats: ", err)
+		level.Error(c.logger).Log("msg", "Can not request stats", "err", err)
 		return
 	}
 
@@ -270,7 +269,7 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	// we receive records in response
 	records, err := binrpc.ReadPacket(conn, cookie)
 	if err != nil {
-		log.Error("Can not fetch stats: ", err)
+		level.Error(c.logger).Log("msg", "Can not fetch stats", "err", err)
 		return
 	}
 
@@ -289,13 +288,13 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	// now fetch pkg stats
 	cookie, err = binrpc.WritePacket(conn, "pkg.stats")
 	if err != nil {
-		log.Error("Can not request pkg.stats: ", err)
+		level.Error(c.logger).Log("msg", "Can not request pkg.stats", "err", err)
 		return
 	}
 
 	records, err = binrpc.ReadPacket(conn, cookie)
 	if err != nil {
-		log.Error("Can not fetch pkg.stats: ", err)
+		level.Error(c.logger).Log("msg", "Can not fetch pkg.stats", "err", err)
 		return
 	}
 
@@ -330,13 +329,13 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	// fetch tcp details
 	cookie, err = binrpc.WritePacket(conn, "core.tcp_info")
 	if err != nil {
-		log.Error("Can not request core.tcp_info: ", err)
+		level.Error(c.logger).Log("msg", "Can not request core.tcp_info", "err", err)
 		return
 	}
 
 	records, err = binrpc.ReadPacket(conn, cookie)
 	if err != nil || len(records) == 0 {
-		log.Error("Can not fetch core.tcp_info: ", err)
+		level.Error(c.logger).Log("msg", "Can not fetch core.tcp_info", "err", err)
 		return
 	}
 	items, _ = records[0].StructItems()
@@ -361,20 +360,20 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	// fetch rtpengine disabled status and url
 	cookie, err = binrpc.WritePacket(conn, "rtpengine.show", "all")
 	if err != nil {
-		log.Error("Can not request rtpengine.show: ", err)
+		level.Error(c.logger).Log("msg", "Can not request rtpengine.show", "err", err)
 		return
 	}
 
 	records, err = binrpc.ReadPacket(conn, cookie)
 	if err != nil || len(records) == 0 {
-		log.Error("Can not fetch rtpengine.show: ", err)
+		level.Error(c.logger).Log("msg", "Can not fetch rtpengine.show", "err", err)
 		return
 	}
 
 	for _, record := range records {
 		items, _ = record.StructItems()
 		if len(items) == 0 {
-			log.Debug("Rtpengine.show all has empty items in record - probably because rtpengine is disabled")
+			level.Debug(c.logger).Log("msg", "Rtpengine.show all has empty items in record - probably because rtpengine is disabled")
 			continue
 		}
 		var url string
@@ -398,7 +397,7 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 			}
 		}
 		if url == "" {
-			log.Error("No valid url found for rtpengine, failed to construct metric rtpengine_enabled")
+			level.Error(c.logger).Log("msg", "No valid url found for rtpengine, failed to construct metric rtpengine_enabled")
 			continue
 		}
 		//invert the disabled status to fit the metric name "rtpengine_enabled"
@@ -590,15 +589,15 @@ func convertStatToMetric(completeStatMap map[string]string, statKey string, opti
 			if err == nil {
 				// handover the metric to prometheus api
 				metricChannel <- metric
-			} else {
+				// } else {
 				// or skip and complain
-				log.Warnf("Could not convert stat value [%s]: %s", statKey, err)
+				// log.Warnf("Could not convert stat value [%s]: %s", statKey, err)
 			}
 		}
-	} else {
+		// } else {
 		// skip stat values not found in completeStatMap
 		// can happen if some kamailio modules are not loaded
 		// and thus certain stat entries are not created
-		log.Debugf("Skipping stat value [%s], it was not returned by kamailio", statKey)
+		// log.Debugf("Skipping stat value [%s], it was not returned by kamailio", statKey)
 	}
 }
