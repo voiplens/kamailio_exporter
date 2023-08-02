@@ -36,82 +36,82 @@ import (
 // declare a series of prometheus metric descriptions
 // we can reuse them for each scrape
 var (
-	core_request_total = prometheus.NewDesc(
+	coreRequestTotal = prometheus.NewDesc(
 		"kamailio_core_request_total",
 		"Request counters",
 		[]string{"method"}, nil)
 
-	core_rcv_request_total = prometheus.NewDesc(
+	coreRcvRequestTotal = prometheus.NewDesc(
 		"kamailio_core_rcv_request_total",
 		"Received requests by method",
 		[]string{"method"}, nil)
 
-	core_reply_total = prometheus.NewDesc(
+	coreReplyTotal = prometheus.NewDesc(
 		"kamailio_core_reply_total",
 		"Reply counters",
 		[]string{"type"}, nil)
 
-	core_rcv_reply_total = prometheus.NewDesc(
+	coreRcvReplyTotal = prometheus.NewDesc(
 		"kamailio_core_rcv_reply_total",
 		"Received replies by code",
 		[]string{"code"}, nil)
 
-	shmem_bytes = prometheus.NewDesc(
+	shmemBytes = prometheus.NewDesc(
 		"kamailio_shm_bytes",
 		"Shared memory sizes",
 		[]string{"type"}, nil)
 
-	shmem_fragments = prometheus.NewDesc(
+	shmemFragments = prometheus.NewDesc(
 		"kamailio_shm_fragments",
 		"Shared memory fragment count",
 		[]string{}, nil)
 
-	dns_failed = prometheus.NewDesc(
+	dnsFailed = prometheus.NewDesc(
 		"kamailio_dns_failed_request_total",
 		"Failed dns requests",
 		[]string{}, nil)
 
-	bad_uri = prometheus.NewDesc(
+	badURI = prometheus.NewDesc(
 		"kamailio_bad_uri_total",
 		"Messages with bad uri",
 		[]string{}, nil)
 
-	bad_msg_hdr = prometheus.NewDesc(
+	badMsgHdr = prometheus.NewDesc(
 		"kamailio_bad_msg_hdr",
 		"Messages with bad message header",
 		[]string{}, nil)
 
-	sl_reply_total = prometheus.NewDesc(
+	slReplyTotal = prometheus.NewDesc(
 		"kamailio_sl_reply_total",
 		"Stateless replies by code",
 		[]string{"code"}, nil)
 
-	sl_type_total = prometheus.NewDesc(
+	slTypeTotal = prometheus.NewDesc(
 		"kamailio_sl_type_total",
 		"Stateless replies by type",
 		[]string{"type"}, nil)
 
-	tcp_total = prometheus.NewDesc(
+	tcpTotal = prometheus.NewDesc(
 		"kamailio_tcp_total",
 		"TCP connection counters",
 		[]string{"type"}, nil)
 
-	tcp_connections = prometheus.NewDesc(
+	tcpConnections = prometheus.NewDesc(
 		"kamailio_tcp_connections",
 		"Opened TCP connections",
 		[]string{}, nil)
 
-	tcp_writequeue = prometheus.NewDesc(
+	tcpWritequeue = prometheus.NewDesc(
 		"kamailio_tcp_writequeue",
 		"TCP write queue size",
 		[]string{}, nil)
 
-	tmx_code_total = prometheus.NewDesc(
+	tmxCodeTotal = prometheus.NewDesc(
 		"kamailio_tmx_code_total",
 		"Completed Transaction counters by code",
 		[]string{"code"}, nil)
 
-	tmx_type_total = prometheus.NewDesc(
+	tmxTypeTotal = prometheus.NewDesc(
 		"kamailio_tmx_type_total",
 		"Completed Transaction counters by type",
 		[]string{"type"}, nil)
@@ -121,7 +121,7 @@ var (
 		"Ongoing Transactions",
 		[]string{"type"}, nil)
 
-	tmx_rpl_total = prometheus.NewDesc(
+	tmxRplTotal = prometheus.NewDesc(
 		"kamailio_tmx_rpl_total",
 		"Tmx reply counters",
 		[]string{"type"}, nil)
@@ -131,61 +131,61 @@ var (
 		"Ongoing Dialogs",
 		[]string{"type"}, nil)
 
-	pkgmem_used = prometheus.NewDesc(
+	pkgmemUsed = prometheus.NewDesc(
 		"kamailio_pkgmem_used",
 		"Private memory used",
 		[]string{"entry"},
 		nil)
 
-	pkgmem_free = prometheus.NewDesc(
+	pkgmemFree = prometheus.NewDesc(
 		"kamailio_pkgmem_free",
 		"Private memory free",
 		[]string{"entry"},
 		nil)
 
-	pkgmem_real = prometheus.NewDesc(
+	pkgmemReal = prometheus.NewDesc(
 		"kamailio_pkgmem_real",
 		"Private memory real used",
 		[]string{"entry"},
 		nil)
 
-	pkgmem_size = prometheus.NewDesc(
+	pkgmemSize = prometheus.NewDesc(
 		"kamailio_pkgmem_size",
 		"Private memory total size",
 		[]string{"entry"},
 		nil)
 
-	pkgmem_frags = prometheus.NewDesc(
+	pkgmemFrags = prometheus.NewDesc(
 		"kamailio_pkgmem_frags",
 		"Private memory total frags",
 		[]string{"entry"},
 		nil)
 
-	tcp_readers = prometheus.NewDesc(
+	tcpReaders = prometheus.NewDesc(
 		"kamailio_tcp_readers",
 		"TCP readers",
 		[]string{},
 		nil)
 
-	tcp_max_connections = prometheus.NewDesc(
+	tcpMaxConnections = prometheus.NewDesc(
 		"kamailio_tcp_max_connections",
 		"TCP connection limit",
 		[]string{},
 		nil)
 
-	tls_max_connections = prometheus.NewDesc(
+	tlsMaxConnections = prometheus.NewDesc(
 		"kamailio_tls_max_connections",
 		"TLS connection limit",
 		[]string{},
 		nil)
 
-	tls_connections = prometheus.NewDesc(
+	tlsConnections = prometheus.NewDesc(
 		"kamailio_tls_connections",
 		"Opened TLS connections",
 		[]string{},
 		nil)
 
-	rtpengine_enabled = prometheus.NewDesc(
+	rtpengineEnabled = prometheus.NewDesc(
 		"kamailio_rtpengine_enabled",
 		"rtpengine connection status",
 		[]string{"url", "set", "index", "weight"},
@@ -193,12 +193,12 @@ var (
 )
 
 type PkgStatsEntry struct {
-	entry       int
-	used        int
-	free        int
-	real_used   int
-	total_size  int
-	total_frags int
+	entry      int
+	used       int
+	free       int
+	realUsed   int
+	totalSize  int
+	totalFrags int
 }
 
 // the actual Collector object
@@ -233,7 +233,6 @@ func (c *StatsCollector) Describe(descriptionChannel chan<- *prometheus.Desc) {
 
 // part of the prometheus.Collector interface
 func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
-
 	// TODO measure rpc time
 	//timer := prometheus.NewTimer(rpc_request_duration)
 	//defer timer.ObserveDuration()
@@ -311,19 +310,19 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 			case "free":
 				entry.free, _ = item.Value.Int()
 			case "real_used":
-				entry.real_used, _ = item.Value.Int()
+				entry.realUsed, _ = item.Value.Int()
 			case "total_size":
-				entry.total_size, _ = item.Value.Int()
+				entry.totalSize, _ = item.Value.Int()
 			case "total_frags":
-				entry.total_frags, _ = item.Value.Int()
+				entry.totalFrags, _ = item.Value.Int()
 			}
 		}
 		sentry := strconv.Itoa(entry.entry)
-		metricChannel <- prometheus.MustNewConstMetric(pkgmem_used, prometheus.GaugeValue, float64(entry.used), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(pkgmem_free, prometheus.GaugeValue, float64(entry.free), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(pkgmem_real, prometheus.GaugeValue, float64(entry.real_used), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(pkgmem_size, prometheus.GaugeValue, float64(entry.total_size), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(pkgmem_frags, prometheus.GaugeValue, float64(entry.total_frags), sentry)
+		metricChannel <- prometheus.MustNewConstMetric(pkgmemUsed, prometheus.GaugeValue, float64(entry.used), sentry)
+		metricChannel <- prometheus.MustNewConstMetric(pkgmemFree, prometheus.GaugeValue, float64(entry.free), sentry)
+		metricChannel <- prometheus.MustNewConstMetric(pkgmemReal, prometheus.GaugeValue, float64(entry.realUsed), sentry)
+		metricChannel <- prometheus.MustNewConstMetric(pkgmemSize, prometheus.GaugeValue, float64(entry.totalSize), sentry)
+		metricChannel <- prometheus.MustNewConstMetric(pkgmemFrags, prometheus.GaugeValue, float64(entry.totalFrags), sentry)
 	}
 
 	// fetch tcp details
@@ -344,16 +343,16 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 		switch item.Key {
 		case "readers":
 			v, _ = item.Value.Int()
-			metricChannel <- prometheus.MustNewConstMetric(tcp_readers, prometheus.GaugeValue, float64(v))
+			metricChannel <- prometheus.MustNewConstMetric(tcpReaders, prometheus.GaugeValue, float64(v))
 		case "max_connections":
 			v, _ = item.Value.Int()
-			metricChannel <- prometheus.MustNewConstMetric(tcp_max_connections, prometheus.GaugeValue, float64(v))
+			metricChannel <- prometheus.MustNewConstMetric(tcpMaxConnections, prometheus.GaugeValue, float64(v))
 		case "max_tls_connections":
 			v, _ = item.Value.Int()
-			metricChannel <- prometheus.MustNewConstMetric(tls_max_connections, prometheus.GaugeValue, float64(v))
+			metricChannel <- prometheus.MustNewConstMetric(tlsMaxConnections, prometheus.GaugeValue, float64(v))
 		case "opened_tls_connections":
 			v, _ = item.Value.Int()
-			metricChannel <- prometheus.MustNewConstMetric(tls_connections, prometheus.GaugeValue, float64(v))
+			metricChannel <- prometheus.MustNewConstMetric(tlsConnections, prometheus.GaugeValue, float64(v))
 		}
 	}
 
@@ -406,131 +405,130 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 		} else {
 			v = 1
 		}
-		metricChannel <- prometheus.MustNewConstMetric(rtpengine_enabled, prometheus.GaugeValue, float64(v), url, set, index, weight)
+		metricChannel <- prometheus.MustNewConstMetric(rtpengineEnabled, prometheus.GaugeValue, float64(v), url, set, index, weight)
 	}
 }
 
 // produce a series of prometheus.Metric values by converting "well-known" prometheus stats
 func produceMetrics(completeStatMap map[string]string, metricChannel chan<- prometheus.Metric) {
-
 	// kamailio_core_request_total
-	convertStatToMetric(completeStatMap, "core.drop_requests", "drop", core_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.err_requests", "err", core_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.fwd_requests", "fwd", core_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests", "rcv", core_request_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.drop_requests", "drop", coreRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.err_requests", "err", coreRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.fwd_requests", "fwd", coreRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests", "rcv", coreRequestTotal, metricChannel, prometheus.CounterValue)
 
 	// kamailio_core_rcv_request_total
-	convertStatToMetric(completeStatMap, "core.rcv_requests_ack", "ack", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_bye", "bye", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_cancel", "cancel", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_info", "info", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_invite", "invite", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_message", "message", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_notify", "notify", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_options", "options", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_prack", "prack", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_publish", "publish", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_refer", "refer", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_register", "register", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_subscribe", "subscribe", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_requests_update", "update", core_rcv_request_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.unsupported_methods", "unsupported", core_rcv_request_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_ack", "ack", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_bye", "bye", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_cancel", "cancel", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_info", "info", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_invite", "invite", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_message", "message", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_notify", "notify", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_options", "options", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_prack", "prack", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_publish", "publish", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_refer", "refer", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_register", "register", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_subscribe", "subscribe", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_requests_update", "update", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.unsupported_methods", "unsupported", coreRcvRequestTotal, metricChannel, prometheus.CounterValue)
 
 	// kamailio_core_reply_total
-	convertStatToMetric(completeStatMap, "core.drop_replies", "drop", core_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.err_replies", "err", core_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.fwd_replies", "fwd", core_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies", "rcv", core_reply_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.drop_replies", "drop", coreReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.err_replies", "err", coreReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.fwd_replies", "fwd", coreReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies", "rcv", coreReplyTotal, metricChannel, prometheus.CounterValue)
 
 	// kamailio_core_rcv_reply_total
-	convertStatToMetric(completeStatMap, "core.rcv_replies_18x", "18x", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_1xx", "1xx", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_2xx", "2xx", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_3xx", "3xx", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_401", "401", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_404", "404", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_407", "407", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_408", "408", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_480", "480", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_486", "486", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_4xx", "4xx", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_5xx", "5xx", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.rcv_replies_6xx", "6xx", core_rcv_reply_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_18x", "18x", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_1xx", "1xx", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_2xx", "2xx", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_3xx", "3xx", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_401", "401", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_404", "404", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_407", "407", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_408", "408", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_480", "480", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_486", "486", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_4xx", "4xx", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_5xx", "5xx", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.rcv_replies_6xx", "6xx", coreRcvReplyTotal, metricChannel, prometheus.CounterValue)
 
 	// kamailio_shm_bytes
-	convertStatToMetric(completeStatMap, "shmem.free_size", "free", shmem_bytes, metricChannel, prometheus.GaugeValue)
-	convertStatToMetric(completeStatMap, "shmem.max_used_size", "max_used", shmem_bytes, metricChannel, prometheus.GaugeValue)
-	convertStatToMetric(completeStatMap, "shmem.real_used_size", "real_used", shmem_bytes, metricChannel, prometheus.GaugeValue)
-	convertStatToMetric(completeStatMap, "shmem.total_size", "total", shmem_bytes, metricChannel, prometheus.GaugeValue)
-	convertStatToMetric(completeStatMap, "shmem.used_size", "used", shmem_bytes, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "shmem.free_size", "free", shmemBytes, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "shmem.max_used_size", "max_used", shmemBytes, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "shmem.real_used_size", "real_used", shmemBytes, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "shmem.total_size", "total", shmemBytes, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "shmem.used_size", "used", shmemBytes, metricChannel, prometheus.GaugeValue)
 
-	convertStatToMetric(completeStatMap, "shmem.fragments", "", shmem_fragments, metricChannel, prometheus.GaugeValue)
-	convertStatToMetric(completeStatMap, "dns.failed_dns_request", "", dns_failed, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.bad_URIs_rcvd", "", bad_uri, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "core.bad_msg_hdr", "", bad_msg_hdr, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "shmem.fragments", "", shmemFragments, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "dns.failed_dns_request", "", dnsFailed, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.bad_URIs_rcvd", "", badURI, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "core.bad_msg_hdr", "", badMsgHdr, metricChannel, prometheus.CounterValue)
 
 	// kamailio_sl_reply_total
-	convertStatToMetric(completeStatMap, "sl.1xx_replies", "1xx", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.200_replies", "200", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.202_replies", "202", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.2xx_replies", "2xx", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.300_replies", "300", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.301_replies", "301", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.302_replies", "302", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.3xx_replies", "3xx", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.400_replies", "400", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.401_replies", "401", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.403_replies", "403", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.404_replies", "404", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.407_replies", "407", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.408_replies", "408", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.483_replies", "483", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.4xx_replies", "4xx", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.500_replies", "500", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.5xx_replies", "5xx", sl_reply_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.6xx_replies", "6xx", sl_reply_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.1xx_replies", "1xx", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.200_replies", "200", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.202_replies", "202", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.2xx_replies", "2xx", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.300_replies", "300", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.301_replies", "301", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.302_replies", "302", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.3xx_replies", "3xx", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.400_replies", "400", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.401_replies", "401", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.403_replies", "403", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.404_replies", "404", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.407_replies", "407", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.408_replies", "408", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.483_replies", "483", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.4xx_replies", "4xx", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.500_replies", "500", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.5xx_replies", "5xx", slReplyTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.6xx_replies", "6xx", slReplyTotal, metricChannel, prometheus.CounterValue)
 
 	// kamailio_sl_type_total
-	convertStatToMetric(completeStatMap, "sl.failures", "failure", sl_type_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.received_ACKs", "received_ack", sl_type_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.sent_err_replies", "sent_err_reply", sl_type_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.sent_replies", "sent_reply", sl_type_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "sl.xxx_replies", "xxx_reply", sl_type_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.failures", "failure", slTypeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.received_ACKs", "received_ack", slTypeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.sent_err_replies", "sent_err_reply", slTypeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.sent_replies", "sent_reply", slTypeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "sl.xxx_replies", "xxx_reply", slTypeTotal, metricChannel, prometheus.CounterValue)
 
 	// kamailio_tcp_total
-	convertStatToMetric(completeStatMap, "tcp.con_reset", "con_reset", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.con_timeout", "con_timeout", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.connect_failed", "connect_failed", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.connect_success", "connect_success", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.established", "established", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.local_reject", "local_reject", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.passive_open", "passive_open", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.send_timeout", "send_timeout", tcp_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tcp.sendq_full", "sendq_full", tcp_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.con_reset", "con_reset", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.con_timeout", "con_timeout", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.connect_failed", "connect_failed", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.connect_success", "connect_success", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.established", "established", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.local_reject", "local_reject", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.passive_open", "passive_open", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.send_timeout", "send_timeout", tcpTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tcp.sendq_full", "sendq_full", tcpTotal, metricChannel, prometheus.CounterValue)
 	// kamailio_tcp_connections
-	convertStatToMetric(completeStatMap, "tcp.current_opened_connections", "", tcp_connections, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "tcp.current_opened_connections", "", tcpConnections, metricChannel, prometheus.GaugeValue)
 	// kamailio_tcp_writequeue
-	convertStatToMetric(completeStatMap, "tcp.current_write_queue_size", "", tcp_writequeue, metricChannel, prometheus.GaugeValue)
+	convertStatToMetric(completeStatMap, "tcp.current_write_queue_size", "", tcpWritequeue, metricChannel, prometheus.GaugeValue)
 
 	// kamailio_tmx_code_total
-	convertStatToMetric(completeStatMap, "tmx.2xx_transactions", "2xx", tmx_code_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.3xx_transactions", "3xx", tmx_code_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.4xx_transactions", "4xx", tmx_code_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.5xx_transactions", "5xx", tmx_code_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.6xx_transactions", "6xx", tmx_code_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.2xx_transactions", "2xx", tmxCodeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.3xx_transactions", "3xx", tmxCodeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.4xx_transactions", "4xx", tmxCodeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.5xx_transactions", "5xx", tmxCodeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.6xx_transactions", "6xx", tmxCodeTotal, metricChannel, prometheus.CounterValue)
 	// kamailio_tmx_type_total
-	convertStatToMetric(completeStatMap, "tmx.UAC_transactions", "uac", tmx_type_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.UAS_transactions", "uas", tmx_type_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.UAC_transactions", "uac", tmxTypeTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.UAS_transactions", "uas", tmxTypeTotal, metricChannel, prometheus.CounterValue)
 	// kamailio_tmx
 	convertStatToMetric(completeStatMap, "tmx.active_transactions", "active", tmx, metricChannel, prometheus.GaugeValue)
 	convertStatToMetric(completeStatMap, "tmx.inuse_transactions", "inuse", tmx, metricChannel, prometheus.GaugeValue)
 
 	// kamailio_tmx_rpl_total
-	convertStatToMetric(completeStatMap, "tmx.rpl_absorbed", "absorbed", tmx_rpl_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.rpl_generated", "generated", tmx_rpl_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.rpl_received", "received", tmx_rpl_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.rpl_relayed", "relayed", tmx_rpl_total, metricChannel, prometheus.CounterValue)
-	convertStatToMetric(completeStatMap, "tmx.rpl_sent", "sent", tmx_rpl_total, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.rpl_absorbed", "absorbed", tmxRplTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.rpl_generated", "generated", tmxRplTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.rpl_received", "received", tmxRplTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.rpl_relayed", "relayed", tmxRplTotal, metricChannel, prometheus.CounterValue)
+	convertStatToMetric(completeStatMap, "tmx.rpl_sent", "sent", tmxRplTotal, metricChannel, prometheus.CounterValue)
 
 	// kamailio_dialog
 	convertStatToMetric(completeStatMap, "dialog.active_dialogs", "active_dialogs", dialog, metricChannel, prometheus.CounterValue)
