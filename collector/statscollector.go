@@ -38,6 +38,11 @@ import (
 // declare a series of prometheus metric descriptions
 // we can reuse them for each scrape
 var (
+	coreUptime = prometheus.NewDesc(
+		"kamailio_core_uptime",
+		"Uptime in seconds",
+		[]string{"version", "compiled", "compiler"}, nil)
+
 	coreRequestTotal = prometheus.NewDesc(
 		"kamailio_core_request_total",
 		"Request counters",
@@ -279,6 +284,11 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	if err != nil {
 		return
 	}
+
+	err = fetchCoreUptimeAndInfo(conn, c, metricChannel)
+	if err != nil {
+		return
+	}
 }
 
 func fetchStats(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
@@ -413,6 +423,51 @@ func fetchRTPEngine(conn net.Conn, c *StatsCollector, metricChannel chan<- prome
 		metricChannel <- prometheus.MustNewConstMetric(rtpengineEnabled, prometheus.GaugeValue, float64(v), url, set, index, weight)
 	}
 	return nil
+}
+
+func fetchCoreUptimeAndInfo(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
+	records, err := getRecords(conn, c, "core.info")
+	if err != nil {
+		return err
+	}
+
+	uptime, err := fetchUptime(conn, c)
+	if err != nil {
+		return err
+	}
+
+	items, _ := records[0].StructItems()
+	var version string
+	var compiled, compiler string
+	for _, item := range items {
+		switch item.Key {
+		case "version":
+			version, _ = item.Value.String()
+		case "compiled":
+			compiled, _ = item.Value.String()
+		case "compiler":
+			compiler, _ = item.Value.String()
+		}
+	}
+	metricChannel <- prometheus.MustNewConstMetric(coreUptime, prometheus.GaugeValue, float64(uptime), version, compiled, compiler)
+	return nil
+}
+
+func fetchUptime(conn net.Conn, c *StatsCollector) (int, error) {
+	records, err := getRecords(conn, c, "core.uptime")
+	if err != nil {
+		return 0, err
+	}
+
+	items, _ := records[0].StructItems()
+	var uptime int
+	for _, item := range items {
+		switch item.Key {
+		case "uptime":
+			uptime, _ = item.Value.Int()
+		}
+	}
+	return uptime, nil
 }
 
 func getRecords(conn net.Conn, c *StatsCollector, values ...string) ([]binrpc.Record, error) {
