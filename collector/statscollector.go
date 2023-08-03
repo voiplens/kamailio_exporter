@@ -282,18 +282,8 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 }
 
 func fetchStats(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
-	// WritePacket returns the cookie generated
-	cookie, err := binrpc.WritePacket(conn, "stats.fetch", "all")
+	records, err := getRecords(conn, c, "stats.fetch", "all")
 	if err != nil {
-		level.Error(c.logger).Log("msg", "Can not request stats", "err", err)
-		return err
-	}
-
-	// the cookie is passed again for verification
-	// we receive records in response
-	records, err := binrpc.ReadPacket(conn, cookie)
-	if err != nil {
-		level.Error(c.logger).Log("msg", "Can not fetch stats", "err", err)
 		return err
 	}
 
@@ -313,15 +303,8 @@ func fetchStats(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheu
 
 func fetchPkgStats(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
 	// now fetch pkg stats
-	cookie, err := binrpc.WritePacket(conn, "pkg.stats")
+	records, err := getRecords(conn, c, "pkg.stats")
 	if err != nil {
-		level.Error(c.logger).Log("msg", "Can not request pkg.stats", "err", err)
-		return err
-	}
-
-	records, err := binrpc.ReadPacket(conn, cookie)
-	if err != nil {
-		level.Error(c.logger).Log("msg", "Can not fetch pkg.stats", "err", err)
 		return err
 	}
 
@@ -357,17 +340,11 @@ func fetchPkgStats(conn net.Conn, c *StatsCollector, metricChannel chan<- promet
 
 func fetchTCPDetails(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
 	// fetch tcp details
-	cookie, err := binrpc.WritePacket(conn, "core.tcp_info")
+	records, err := getRecords(conn, c, "core.tcp_info")
 	if err != nil {
-		level.Error(c.logger).Log("msg", "Can not request core.tcp_info", "err", err)
 		return err
 	}
 
-	records, err := binrpc.ReadPacket(conn, cookie)
-	if err != nil || len(records) == 0 {
-		level.Error(c.logger).Log("msg", "Can not fetch core.tcp_info", "err", err)
-		return err
-	}
 	items, _ := records[0].StructItems()
 	var v int
 	for _, item := range items {
@@ -391,15 +368,8 @@ func fetchTCPDetails(conn net.Conn, c *StatsCollector, metricChannel chan<- prom
 
 func fetchRTPEngine(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
 	// fetch rtpengine disabled status and url
-	cookie, err := binrpc.WritePacket(conn, "rtpengine.show", "all")
+	records, err := getRecords(conn, c, "rtpengine.show", "all")
 	if err != nil {
-		level.Error(c.logger).Log("msg", "Can not request rtpengine.show", "err", err)
-		return err
-	}
-
-	records, err := binrpc.ReadPacket(conn, cookie)
-	if err != nil || len(records) == 0 {
-		level.Error(c.logger).Log("msg", "Can not fetch rtpengine.show", "err", err)
 		return err
 	}
 
@@ -443,6 +413,21 @@ func fetchRTPEngine(conn net.Conn, c *StatsCollector, metricChannel chan<- prome
 		metricChannel <- prometheus.MustNewConstMetric(rtpengineEnabled, prometheus.GaugeValue, float64(v), url, set, index, weight)
 	}
 	return nil
+}
+
+func getRecords(conn net.Conn, c *StatsCollector, values ...string) ([]binrpc.Record, error) {
+	cookie, err := binrpc.WritePacket(conn, values...)
+	if err != nil {
+		level.Error(c.logger).Log("msg", "Can not request", "cmd", values[0], "err", err)
+		return nil, err
+	}
+
+	records, err := binrpc.ReadPacket(conn, cookie)
+	if err != nil || len(records) == 0 {
+		level.Error(c.logger).Log("msg", "Can not fetch", "cmd", values[0], "err", err)
+		return nil, err
+	}
+	return records, nil
 }
 
 // produce a series of prometheus.Metric values by converting "well-known" prometheus stats
