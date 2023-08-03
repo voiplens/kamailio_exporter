@@ -24,8 +24,10 @@ package collector
 import (
 	"fmt"
 	"net"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	binrpc "github.com/florentchauveau/go-kamailio-binrpc/v3"
 	"github.com/go-kit/log"
@@ -203,24 +205,32 @@ type PkgStatsEntry struct {
 
 // the actual Collector object
 type StatsCollector struct {
-	socketPath   string
-	kamailioHost string
-	kamailioPort int
-	logger       log.Logger
+	binrpcURI string
+	timeout   time.Duration
+
+	url    *url.URL
+	logger log.Logger
 }
 
 // produce a new StatsCollector object
-func New(socketPath string, host string, port int, logger log.Logger) (*StatsCollector, error) {
+func New(binrpcURI string, timeout time.Duration, logger log.Logger) (*StatsCollector, error) {
 	// fill the Collector struct
-	collector := &StatsCollector{
-		socketPath:   socketPath,
-		kamailioHost: host,
-		kamailioPort: port,
-		logger:       logger,
+	var c StatsCollector
+	c.logger = logger
+	c.timeout = timeout
+	c.binrpcURI = binrpcURI
+
+	var url *url.URL
+	var err error
+
+	if url, err = url.Parse(c.binrpcURI); err != nil {
+		return nil, fmt.Errorf("cannot parse URI: %w", err)
 	}
 
+	c.url = url
+
 	// fine, return the created object struct
-	return collector, nil
+	return &c, nil
 }
 
 // part of the prometheus.Collector interface
@@ -240,22 +250,20 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	// establish connection to Kamailio server
 	var err error
 	var conn net.Conn
-	if c.kamailioHost == "" {
-		level.Debug(c.logger).Log("msg", "Requesting stats from kamailio via domain socket", "addr", c.socketPath)
-		conn, err = net.Dial("unix", c.socketPath)
-	} else {
-		address := fmt.Sprintf("%s:%d", c.kamailioHost, c.kamailioPort)
-		level.Debug(c.logger).Log("msg", "Requesting stats from kamailio via binrpc", "addr", address)
-		conn, err = net.Dial("tcp", address)
+	address := c.url.Host
+
+	if c.url.Scheme == "unix" {
+		address = c.url.Path
 	}
+
+	conn, err = net.DialTimeout(c.url.Scheme, address, c.timeout)
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Can not connect to kamailio", "err", err)
 		return
 	}
 
+	conn.SetDeadline(time.Now().Add(c.timeout))
 	defer conn.Close()
-	// TODO
-	// c.conn.SetDeadline(time.Now().Add(c.Timeout))
 
 	// WritePacket returns the cookie generated
 	cookie, err := binrpc.WritePacket(conn, "stats.fetch", "all")

@@ -59,39 +59,31 @@ func main() {
 			"web.rtp-telemetry-path",
 			"Path under which to expose rtpengine metrics.",
 		).Default("").String()
-		socketPath = kingpin.Flag(
-			"kamailio.socket-path",
-			"Path to Kamailio unix domain socket",
-		).Default("/var/run/kamailio/kamailio_ctl").String()
-		host = kingpin.Flag(
-			"kamailio.rpc-host",
-			`URI of Kamailio RPC endpoint. Example: "tcp://localhost:3012"`,
-		).Default("").String()
-		port = kingpin.Flag(
-			"kamailio.rpc-port",
-			`URI of Kamailio RPC endpoint. Example: "tcp://localhost:3012"`,
-		).Default("3012").Int()
+		binrpcURI = kingpin.Flag(
+			"kamailio.binrpc-uri",
+			`BINRPC URI on which to scrape kamailio. E.g. "tcp://localhost:3012"`,
+		).Short('u').Default("unix:///var/run/kamailio/kamailio_ctl").String()
+		timeout = kingpin.Flag(
+			"kamailio.timeout",
+			"Timeout for trying to get stats from Kamailio using BINRPC.",
+		).Short('t').Default("5s").Duration()
 		customMetricsURL = kingpin.Flag(
 			"kamailio.custom-metrics-url",
 			"URL to request user defined metrics from kamailio",
 		).Default("").String()
-		// rpcURI = kingpin.Flag(
-		// 	"kamailio.rpc-uri",
-		// 	`URI of Kamailio RPC endpoint. Example: "tcp://localhost:3012"`,
-		// ).Default("").String()
 		toolkitFlags = webflag.AddFlags(kingpin.CommandLine, ":9494")
 	)
 
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
-	kingpin.Version(version.Print("freeswitch_exporter"))
+	kingpin.Version(version.Print("kamailio_exporter"))
 	kingpin.Parse()
 	logger := promlog.New(promlogConfig)
 
-	level.Info(logger).Log("msg", "Starting freeswitch_exporter", "version", version.Info())
+	level.Info(logger).Log("msg", "Starting kamailio_exporter", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
 
-	c, err := collector.New(*socketPath, *host, *port, logger)
+	c, err := collector.New(*binrpcURI, *timeout, logger)
 
 	if err != nil {
 		panic(err)
@@ -99,11 +91,10 @@ func main() {
 
 	prometheus.MustRegister(c)
 
-	http.Handle(*metricsPath, promhttp.Handler())
 	if *metricsPath != "/" && *metricsPath != "" {
 		landingConfig := web.LandingConfig{
-			Name:        "FreeSWITCH Exporter",
-			Description: "Prometheus Exporter for FreeSWITCH servers",
+			Name:        "Kamailio Exporter",
+			Description: "Prometheus Exporter for Kamailio servers",
 			Version:     version.Info(),
 			Links: []web.LandingLinks{
 				{
