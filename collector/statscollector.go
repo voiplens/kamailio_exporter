@@ -285,6 +285,11 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 		return
 	}
 
+	err = fetchRTPEngine(conn, c, metricChannel)
+	if err != nil {
+		return
+	}
+
 	err = fetchCoreUptimeAndInfo(conn, c, metricChannel)
 	if err != nil {
 		return
