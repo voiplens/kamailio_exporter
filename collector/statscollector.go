@@ -265,11 +265,28 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	conn.SetDeadline(time.Now().Add(c.timeout))
 	defer conn.Close()
 
+	err = fetchStats(conn, c, metricChannel)
+	if err != nil {
+		return
+	}
+
+	err = fetchPkgStats(conn, c, metricChannel)
+	if err != nil {
+		return
+	}
+
+	err = fetchTCPDetails(conn, c, metricChannel)
+	if err != nil {
+		return
+	}
+}
+
+func fetchStats(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
 	// WritePacket returns the cookie generated
 	cookie, err := binrpc.WritePacket(conn, "stats.fetch", "all")
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Can not request stats", "err", err)
-		return
+		return err
 	}
 
 	// the cookie is passed again for verification
@@ -277,7 +294,7 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	records, err := binrpc.ReadPacket(conn, cookie)
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Can not fetch stats", "err", err)
-		return
+		return err
 	}
 
 	// convert the structure into a simple key=>value map
@@ -291,23 +308,26 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 	produceMetrics(completeStatMap, metricChannel)
 	// produce prometheus.Metric objects for scripted stats (if any)
 	convertScriptedMetrics(completeStatMap, metricChannel)
+	return nil
+}
 
+func fetchPkgStats(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
 	// now fetch pkg stats
-	cookie, err = binrpc.WritePacket(conn, "pkg.stats")
+	cookie, err := binrpc.WritePacket(conn, "pkg.stats")
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Can not request pkg.stats", "err", err)
-		return
+		return err
 	}
 
-	records, err = binrpc.ReadPacket(conn, cookie)
+	records, err := binrpc.ReadPacket(conn, cookie)
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Can not fetch pkg.stats", "err", err)
-		return
+		return err
 	}
 
 	// convert each pkg entry to a series of metrics
 	for _, record := range records {
-		items, _ = record.StructItems()
+		items, _ := record.StructItems()
 		entry := PkgStatsEntry{}
 		for _, item := range items {
 			switch item.Key {
@@ -332,20 +352,23 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 		metricChannel <- prometheus.MustNewConstMetric(pkgmemSize, prometheus.GaugeValue, float64(entry.totalSize), sentry)
 		metricChannel <- prometheus.MustNewConstMetric(pkgmemFrags, prometheus.GaugeValue, float64(entry.totalFrags), sentry)
 	}
+	return nil
+}
 
+func fetchTCPDetails(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
 	// fetch tcp details
-	cookie, err = binrpc.WritePacket(conn, "core.tcp_info")
+	cookie, err := binrpc.WritePacket(conn, "core.tcp_info")
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Can not request core.tcp_info", "err", err)
-		return
+		return err
 	}
 
-	records, err = binrpc.ReadPacket(conn, cookie)
+	records, err := binrpc.ReadPacket(conn, cookie)
 	if err != nil || len(records) == 0 {
 		level.Error(c.logger).Log("msg", "Can not fetch core.tcp_info", "err", err)
-		return
+		return err
 	}
-	items, _ = records[0].StructItems()
+	items, _ := records[0].StructItems()
 	var v int
 	for _, item := range items {
 		switch item.Key {
@@ -363,22 +386,25 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 			metricChannel <- prometheus.MustNewConstMetric(tlsConnections, prometheus.GaugeValue, float64(v))
 		}
 	}
+	return nil
+}
 
+func fetchRTPEngine(conn net.Conn, c *StatsCollector, metricChannel chan<- prometheus.Metric) error {
 	// fetch rtpengine disabled status and url
-	cookie, err = binrpc.WritePacket(conn, "rtpengine.show", "all")
+	cookie, err := binrpc.WritePacket(conn, "rtpengine.show", "all")
 	if err != nil {
 		level.Error(c.logger).Log("msg", "Can not request rtpengine.show", "err", err)
-		return
+		return err
 	}
 
-	records, err = binrpc.ReadPacket(conn, cookie)
+	records, err := binrpc.ReadPacket(conn, cookie)
 	if err != nil || len(records) == 0 {
 		level.Error(c.logger).Log("msg", "Can not fetch rtpengine.show", "err", err)
-		return
+		return err
 	}
 
 	for _, record := range records {
-		items, _ = record.StructItems()
+		items, _ := record.StructItems()
 		if len(items) == 0 {
 			level.Debug(c.logger).Log("msg", "Rtpengine.show all has empty items in record - probably because rtpengine is disabled")
 			continue
@@ -386,6 +412,7 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 		var url string
 		var setInt, indexInt, weightInt int
 		var set, index, weight string
+		var v int
 		for _, item := range items {
 			switch item.Key {
 			case "disabled":
@@ -415,6 +442,7 @@ func (c *StatsCollector) Collect(metricChannel chan<- prometheus.Metric) {
 		}
 		metricChannel <- prometheus.MustNewConstMetric(rtpengineEnabled, prometheus.GaugeValue, float64(v), url, set, index, weight)
 	}
+	return nil
 }
 
 // produce a series of prometheus.Metric values by converting "well-known" prometheus stats
