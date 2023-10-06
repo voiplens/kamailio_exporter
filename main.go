@@ -1,6 +1,6 @@
 // MIT License
 
-// Copyright (c) 2021 Thomas Weber, pascom GmbH & Co. Kg
+// Copyright (c) 2023 Yann Vigara, Angarium Limited
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,13 @@ func init() {
 
 var Version string
 
+func AddFlags(a *kingpin.Application) *collector.KamailioCollectorConfig {
+	config := &collector.KamailioCollectorConfig{}
+	config.BinrpcURI = a.Flag("kamailio.binrpc-uri", `BINRPC URI on which to scrape kamailio. E.g. "tcp://localhost:3012"`).Default("unix:///var/run/kamailio/kamailio_ctl").String()
+	config.Timeout = a.Flag("kamailio.timeout", "Timeout for trying to get stats from Kamailio using BINRPC.").Short('t').Default("5s").Duration()
+	return config
+}
+
 func main() {
 	var (
 		metricsPath = kingpin.Flag(
@@ -59,19 +66,12 @@ func main() {
 			"web.rtp-telemetry-path",
 			"Path under which to expose rtpengine metrics.",
 		).Default("").String()
-		binrpcURI = kingpin.Flag(
-			"kamailio.binrpc-uri",
-			`BINRPC URI on which to scrape kamailio. E.g. "tcp://localhost:3012"`,
-		).Short('u').Default("unix:///var/run/kamailio/kamailio_ctl").String()
-		timeout = kingpin.Flag(
-			"kamailio.timeout",
-			"Timeout for trying to get stats from Kamailio using BINRPC.",
-		).Short('t').Default("5s").Duration()
 		customMetricsURL = kingpin.Flag(
 			"kamailio.custom-metrics-url",
 			"URL to request user defined metrics from kamailio",
 		).Default("").String()
-		toolkitFlags = webflag.AddFlags(kingpin.CommandLine, ":9494")
+		toolkitFlags    = webflag.AddFlags(kingpin.CommandLine, ":9494")
+		collectorConfig = AddFlags(kingpin.CommandLine)
 	)
 
 	promlogConfig := &promlog.Config{}
@@ -83,7 +83,7 @@ func main() {
 	level.Info(logger).Log("msg", "Starting kamailio_exporter", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
 
-	c, err := collector.New(*binrpcURI, *timeout, logger)
+	c, err := collector.NewKamailioCollector(collectorConfig, logger)
 
 	if err != nil {
 		panic(err)
