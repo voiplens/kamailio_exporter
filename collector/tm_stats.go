@@ -65,7 +65,7 @@ func NewTmStatsCollector(config *KamailioCollectorConfig, logger log.Logger) (Co
 	}
 
 	return &tmStatsCollector{
-		codes:    prometheus.NewDesc(prometheus.BuildFQName(namespace, "tm_stats", "codes"), "Per-code counters.", []string{"code"}, nil),
+		codes:    prometheus.NewDesc(prometheus.BuildFQName(namespace, "tm_stats", "codes_total"), "Per-code counters.", []string{"code"}, nil),
 		counters: counters,
 		gauges:   gauges,
 		config:   config,
