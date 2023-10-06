@@ -53,6 +53,7 @@ func AddFlags(a *kingpin.Application) *collector.KamailioCollectorConfig {
 	config := &collector.KamailioCollectorConfig{}
 	config.BinrpcURI = a.Flag("kamailio.binrpc-uri", `BINRPC URI on which to scrape kamailio. E.g. "tcp://localhost:3012"`).Default("unix:///var/run/kamailio/kamailio_ctl").String()
 	config.Timeout = a.Flag("kamailio.timeout", "Timeout for trying to get stats from Kamailio using BINRPC.").Short('t').Default("5s").Duration()
+	config.DialogProfile.Profiles = a.Flag("collector.dialog.profiles", "Select dialog profiles to query.").Default("").Strings()
 	return config
 }
 
