@@ -55,7 +55,7 @@ func NewDlgStatsActiveCollector(config *KamailioCollectorConfig, logger log.Logg
 }
 
 func (c *dlgStatsActiveCollector) Update(conn net.Conn, metricChannel chan<- prometheus.Metric) error {
-	records, err := getRecords(conn, c.logger, "sl.stats")
+	records, err := getRecords(conn, c.logger, "dlg.stats_active")
 	if err != nil {
 		return err
 	}
