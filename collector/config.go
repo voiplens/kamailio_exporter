@@ -27,6 +27,7 @@ import (
 
 type KamailioCollectorConfig struct {
 	DialogProfile DialogConfig
+	DispatcherMap map[int]string
 
 	BinrpcURI  *string
 	Timeout    *time.Duration

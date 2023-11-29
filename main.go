@@ -71,7 +71,11 @@ func main() {
 			"kamailio.custom-metrics-url",
 			"URL to request user defined metrics from kamailio",
 		).Default("").String()
-		toolkitFlags    = webflag.AddFlags(kingpin.CommandLine, ":9494")
+		toolkitFlags  = webflag.AddFlags(kingpin.CommandLine, ":9494")
+		dispatcherMap = kingpin.Flag(
+			"collector.dispatcher.mapping",
+			`Map a Dispatcher ID to a Name using the "ID:NAME" format. E.g. "100:Genesys"`,
+		).Default("").Strings()
 		collectorConfig = AddFlags(kingpin.CommandLine)
 	)
 
@@ -84,6 +88,7 @@ func main() {
 	level.Info(logger).Log("msg", "Starting kamailio_exporter", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", "build_context", version.BuildContext())
 
+	collectorConfig.DispatcherMap = collector.ParseDispatcherMapping(dispatcherMap, logger)
 	c, err := collector.NewKamailioCollector(collectorConfig, logger)
 
 	if err != nil {
