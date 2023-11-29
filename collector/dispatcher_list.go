@@ -76,15 +76,15 @@ func NewDispatcherListCollector(config *KamailioCollectorConfig, logger log.Logg
 	return &dispatcherListCollector{
 		config:         config,
 		logger:         logger,
-		target:         prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target"), "Target status.", []string{"ID", "URI", "Name"}, nil),
-		latencyAvg:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_avg"), "Target Latency Average.", []string{"ID", "URI", "Name"}, nil),
-		latencyStd:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_std"), "Target Latency.", []string{"ID", "URI", "Name"}, nil),
-		latencyEst:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_est"), "Target Latency.", []string{"ID", "URI", "Name"}, nil),
-		latencyMax:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_max"), "Target Latency.", []string{"ID", "URI", "Name"}, nil),
-		latencyTimeout: prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_timeout"), "Target Latency.", []string{"ID", "URI", "Name"}, nil),
-		weight:         prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_weight"), "Target Weight.", []string{"ID", "URI", "Name"}, nil),
-		rweight:        prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_rweight"), "Target rweight.", []string{"ID", "URI", "Name"}, nil),
-		priority:       prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_priority"), "Target Priority.", []string{"ID", "URI", "Name"}, nil),
+		target:         prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target"), "Target status.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		latencyAvg:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_avg"), "Target Latency Average.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		latencyStd:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_std"), "Target Latency.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		latencyEst:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_est"), "Target Latency.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		latencyMax:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_max"), "Target Latency.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		latencyTimeout: prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_timeout"), "Target Latency.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		weight:         prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_weight"), "Target Weight.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		rweight:        prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_rweight"), "Target rweight.", []string{"set_id", "destination", "set_name", "flags"}, nil),
+		priority:       prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_priority"), "Target Priority.", []string{"set_id", "destination", "set_name", "flags"}, nil),
 	}, nil
 }
 
@@ -101,18 +101,18 @@ func (c *dispatcherListCollector) Update(conn net.Conn, metricChannel chan<- pro
 
 	// convert each pkg entry to a series of metrics
 	for _, target := range targets {
-		targetID := fmt.Sprintf("%d", target.ID)
-		targetName := c.config.DispatcherMap[target.ID]
-		level.Info(c.logger).Log("msg", "dispatcher.list", "target", targetID, "uri", target.URI, "name", targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.target, prometheus.GaugeValue, target.Status, targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.latencyAvg, prometheus.GaugeValue, target.LatencyAvg, targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.latencyStd, prometheus.GaugeValue, target.LatencyStd, targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.latencyEst, prometheus.GaugeValue, target.LatencyEst, targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.latencyMax, prometheus.GaugeValue, target.LatencyMax, targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.latencyTimeout, prometheus.GaugeValue, target.LatencyTimeout, targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.priority, prometheus.GaugeValue, float64(target.Priority), targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.weight, prometheus.GaugeValue, float64(target.Weight), targetID, target.URI, targetName)
-		metricChannel <- prometheus.MustNewConstMetric(c.rweight, prometheus.GaugeValue, float64(target.RWeight), targetID, target.URI, targetName)
+		setID := fmt.Sprintf("%d", target.ID)
+		setName := c.config.DispatcherMap[target.ID]
+		level.Info(c.logger).Log("msg", "dispatcher.list", "target", setID, "uri", target.URI, "name", setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.target, prometheus.GaugeValue, target.Status, setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.latencyAvg, prometheus.GaugeValue, target.LatencyAvg, setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.latencyStd, prometheus.GaugeValue, target.LatencyStd, setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.latencyEst, prometheus.GaugeValue, target.LatencyEst, setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.latencyMax, prometheus.GaugeValue, target.LatencyMax, setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.latencyTimeout, prometheus.GaugeValue, target.LatencyTimeout, setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.priority, prometheus.GaugeValue, float64(target.Priority), setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.weight, prometheus.GaugeValue, float64(target.Weight), setID, target.URI, setName, target.Flags)
+		metricChannel <- prometheus.MustNewConstMetric(c.rweight, prometheus.GaugeValue, float64(target.RWeight), setID, target.URI, setName, target.Flags)
 	}
 	return nil
 }
