@@ -35,7 +35,6 @@ func init() {
 }
 
 type StatsFetchCollector struct {
-	coreUptime          *prometheus.Desc
 	coreRequestTotal    *prometheus.Desc
 	coreRcvRequestTotal *prometheus.Desc
 	coreReplyTotal      *prometheus.Desc
@@ -62,11 +61,6 @@ type StatsFetchCollector struct {
 // NewStatsFetchCollector returns a new Collector exposing core stats.
 func NewStatsFetchCollector(config *KamailioCollectorConfig, logger log.Logger) (Collector, error) {
 	return &StatsFetchCollector{
-		coreUptime: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "core_uptime"),
-			"Uptime in seconds",
-			[]string{"version", "compiled", "compiler"}, nil),
-
 		coreRequestTotal: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "core_request_total"),
 			"Request counters",
@@ -184,7 +178,6 @@ func (c *StatsFetchCollector) Update(conn net.Conn, metricChannel chan<- prometh
 	// produce prometheus.Metric objects for scripted stats (if any)
 	convertScriptedMetrics(completeStatMap, metricChannel)
 
-	fetchCoreUptimeAndInfo(conn, c, metricChannel)
 	return nil
 }
 
@@ -377,49 +370,4 @@ func convertStatToMetric(completeStatMap map[string]string, statKey string, opti
 		// and thus certain stat entries are not created
 		// log.Debugf("Skipping stat value [%s], it was not returned by kamailio", statKey)
 	}
-}
-
-func fetchCoreUptimeAndInfo(conn net.Conn, c *StatsFetchCollector, metricChannel chan<- prometheus.Metric) error {
-	records, err := getRecords(conn, c.logger, "core.info")
-	if err != nil {
-		return err
-	}
-
-	uptime, err := fetchUptime(conn, c.logger)
-	if err != nil {
-		return err
-	}
-
-	items, _ := records[0].StructItems()
-	var version string
-	var compiled, compiler string
-	for _, item := range items {
-		switch item.Key {
-		case "version":
-			version, _ = item.Value.String()
-		case "compiled":
-			compiled, _ = item.Value.String()
-		case "compiler":
-			compiler, _ = item.Value.String()
-		}
-	}
-	metricChannel <- prometheus.MustNewConstMetric(c.coreUptime, prometheus.GaugeValue, float64(uptime), version, compiled, compiler)
-	return nil
-}
-
-func fetchUptime(conn net.Conn, logger log.Logger) (int, error) {
-	records, err := getRecords(conn, logger, "core.uptime")
-	if err != nil {
-		return 0, err
-	}
-
-	items, _ := records[0].StructItems()
-	var uptime int
-	for _, item := range items {
-		switch item.Key {
-		case "uptime":
-			uptime, _ = item.Value.Int()
-		}
-	}
-	return uptime, nil
 }
