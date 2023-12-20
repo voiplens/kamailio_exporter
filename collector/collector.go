@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"slices"
 	"sync"
 	"time"
 
@@ -41,16 +42,32 @@ const namespace = "kamailio"
 var (
 	scrapeDurationDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "scrape", "collector_duration_seconds"),
-		"node_exporter: Duration of a collector scrape.",
+		"kamailio_exporter: Duration of a collector scrape.",
 		[]string{"collector"},
 		nil,
 	)
 	scrapeSuccessDesc = prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, "scrape", "collector_success"),
-		"node_exporter: Whether a collector succeeded.",
+		"kamailio_exporter: Whether a collector succeeded.",
 		[]string{"collector"},
 		nil,
 	)
+	kamailioDialFailureDesc = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", "failure_total"),
+		"kamailio_exporter: Counter of a Dial failures.",
+		[]string{},
+		nil,
+	)
+	kamailioUpDesc = prometheus.NewDesc(
+		prometheus.BuildFQName(namespace, "", "up"),
+		"kamailio_exporter: Whether the Kamailio endpoint is up.",
+		[]string{},
+		nil,
+	)
+)
+
+var (
+	dialErrorCounter = 0
 )
 
 const (
@@ -125,15 +142,45 @@ func (n KamailioCollector) Collect(ch chan<- prometheus.Metric) {
 	conn, err = net.DialTimeout(n.url.Scheme, address, n.timeout)
 	if err != nil {
 		level.Error(n.logger).Log("msg", "Can not connect to kamailio", "err", err)
+		dialErrorCounter++
+		ch <- prometheus.MustNewConstMetric(kamailioDialFailureDesc, prometheus.CounterValue, float64(dialErrorCounter))
+		ch <- prometheus.MustNewConstMetric(kamailioUpDesc, prometheus.GaugeValue, 0)
 		return
 	}
 
 	conn.SetDeadline(time.Now().Add(n.timeout))
 	defer conn.Close()
 
-	for name, c := range n.Collectors {
-		execute(name, c, conn, ch, n.logger)
+	runtimeMethods, err := listMethods(conn, ch, n.logger)
+	if err != nil {
+		return
 	}
+
+	for name, c := range n.Collectors {
+		if slices.Contains(runtimeMethods, name) {
+			execute(name, c, conn, ch, n.logger)
+		}
+	}
+}
+
+func listMethods(conn net.Conn, ch chan<- prometheus.Metric, logger log.Logger) ([]string, error) {
+	begin := time.Now()
+	records, err := getRecords(conn, logger, "system.listMethods")
+	if err != nil {
+		ch <- prometheus.MustNewConstMetric(kamailioUpDesc, prometheus.GaugeValue, 0)
+		ch <- prometheus.MustNewConstMetric(scrapeSuccessDesc, prometheus.GaugeValue, 0, "system.listMethods")
+		return nil, err
+	}
+	runtimeMethods := make([]string, 0)
+	for _, item := range records {
+		command, _ := item.String()
+		runtimeMethods = append(runtimeMethods, command)
+	}
+	duration := time.Since(begin)
+	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, duration.Seconds(), "system.listMethods")
+	ch <- prometheus.MustNewConstMetric(scrapeSuccessDesc, prometheus.GaugeValue, 1, "system.listMethods")
+	ch <- prometheus.MustNewConstMetric(kamailioUpDesc, prometheus.GaugeValue, 1)
+	return runtimeMethods, nil
 }
 
 func execute(name string, c Collector, conn net.Conn, ch chan<- prometheus.Metric, logger log.Logger) {
