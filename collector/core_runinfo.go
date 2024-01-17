@@ -59,7 +59,7 @@ func (c *CoreRuninfoCollector) Update(conn net.Conn, metricChannel chan<- promet
 	items, _ := records[0].StructItems()
 	var version string
 	var compiled, compiler string
-	var uptime float64
+	var uptime int
 	for _, item := range items {
 		switch item.Key {
 		case "version":
@@ -69,9 +69,9 @@ func (c *CoreRuninfoCollector) Update(conn net.Conn, metricChannel chan<- promet
 		case "compiler":
 			compiler, _ = item.Value.String()
 		case "uptime_secs":
-			uptime, _ = item.Value.Double()
+			uptime, _ = item.Value.Int()
 		}
 	}
-	metricChannel <- prometheus.MustNewConstMetric(c.coreUptime, prometheus.GaugeValue, uptime, version, compiled, compiler)
+	metricChannel <- prometheus.MustNewConstMetric(c.coreUptime, prometheus.GaugeValue, float64(uptime), version, compiled, compiler)
 	return nil
 }
