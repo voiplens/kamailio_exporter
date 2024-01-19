@@ -35,6 +35,7 @@ func init() {
 
 type PkgStatsEntry struct {
 	entry      int
+	pid        int
 	used       int
 	free       int
 	realUsed   int
@@ -58,31 +59,31 @@ func NewPkgStatsCollector(config *KamailioCollectorConfig, logger log.Logger) (C
 		used: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "pkgmem_used"),
 			"Private memory used",
-			[]string{"entry"},
+			[]string{"entry", "pid"},
 			nil),
 
 		free: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "pkgmem_free"),
 			"Private memory free",
-			[]string{"entry"},
+			[]string{"entry", "pid"},
 			nil),
 
 		real: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "pkgmem_real"),
 			"Private memory real used",
-			[]string{"entry"},
+			[]string{"entry", "pid"},
 			nil),
 
 		size: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "pkgmem_size"),
 			"Private memory total size",
-			[]string{"entry"},
+			[]string{"entry", "pid"},
 			nil),
 
 		frags: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "pkgmem_frags"),
 			"Private memory total frags",
-			[]string{"entry"},
+			[]string{"entry", "pid"},
 			nil),
 		config: config,
 		logger: logger,
@@ -103,6 +104,8 @@ func (c *pkgStatsCollector) Update(conn net.Conn, metricChannel chan<- prometheu
 			switch item.Key {
 			case "entry":
 				entry.entry, _ = item.Value.Int()
+			case "pid":
+				entry.pid, _ = item.Value.Int()
 			case "used":
 				entry.used, _ = item.Value.Int()
 			case "free":
@@ -116,11 +119,12 @@ func (c *pkgStatsCollector) Update(conn net.Conn, metricChannel chan<- prometheu
 			}
 		}
 		sentry := strconv.Itoa(entry.entry)
-		metricChannel <- prometheus.MustNewConstMetric(c.used, prometheus.GaugeValue, float64(entry.used), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(c.free, prometheus.GaugeValue, float64(entry.free), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(c.real, prometheus.GaugeValue, float64(entry.realUsed), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(c.size, prometheus.GaugeValue, float64(entry.totalSize), sentry)
-		metricChannel <- prometheus.MustNewConstMetric(c.frags, prometheus.GaugeValue, float64(entry.totalFrags), sentry)
+		spid := strconv.Itoa(entry.pid)
+		metricChannel <- prometheus.MustNewConstMetric(c.used, prometheus.GaugeValue, float64(entry.used), sentry, spid)
+		metricChannel <- prometheus.MustNewConstMetric(c.free, prometheus.GaugeValue, float64(entry.free), sentry, spid)
+		metricChannel <- prometheus.MustNewConstMetric(c.real, prometheus.GaugeValue, float64(entry.realUsed), sentry, spid)
+		metricChannel <- prometheus.MustNewConstMetric(c.size, prometheus.GaugeValue, float64(entry.totalSize), sentry, spid)
+		metricChannel <- prometheus.MustNewConstMetric(c.frags, prometheus.GaugeValue, float64(entry.totalFrags), sentry, spid)
 	}
 	return nil
 }
