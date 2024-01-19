@@ -60,6 +60,7 @@ type DispatcherTarget struct {
 type dispatcherListCollector struct {
 	logger         log.Logger
 	target         *prometheus.Desc
+	targetFlags    *prometheus.Desc
 	latencyAvg     *prometheus.Desc
 	latencyStd     *prometheus.Desc
 	latencyEst     *prometheus.Desc
@@ -77,6 +78,7 @@ func NewDispatcherListCollector(config *KamailioCollectorConfig, logger log.Logg
 		config:         config,
 		logger:         logger,
 		target:         prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target"), "Target status.", []string{"set_id", "destination", "set_name"}, nil),
+		targetFlags:    prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_flags_status"), "Target flags.", []string{"set_id", "destination", "set_name", "flags"}, nil),
 		latencyAvg:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_avg"), "Target Latency Average.", []string{"set_id", "destination", "set_name"}, nil),
 		latencyStd:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_std"), "Target Latency.", []string{"set_id", "destination", "set_name"}, nil),
 		latencyEst:     prometheus.NewDesc(prometheus.BuildFQName(namespace, "dispatcher_list", "target_latency_est"), "Target Latency.", []string{"set_id", "destination", "set_name"}, nil),
@@ -104,6 +106,7 @@ func (c *dispatcherListCollector) Update(conn net.Conn, metricChannel chan<- pro
 		setID := fmt.Sprintf("%d", target.ID)
 		setName := c.config.DispatcherMap[target.ID]
 		metricChannel <- prometheus.MustNewConstMetric(c.target, prometheus.GaugeValue, target.Status, setID, target.URI, setName)
+		metricChannel <- prometheus.MustNewConstMetric(c.targetFlags, prometheus.GaugeValue, 1, setID, target.URI, setName, target.Flags)
 		metricChannel <- prometheus.MustNewConstMetric(c.latencyAvg, prometheus.GaugeValue, target.LatencyAvg, setID, target.URI, setName)
 		metricChannel <- prometheus.MustNewConstMetric(c.latencyStd, prometheus.GaugeValue, target.LatencyStd, setID, target.URI, setName)
 		metricChannel <- prometheus.MustNewConstMetric(c.latencyEst, prometheus.GaugeValue, target.LatencyEst, setID, target.URI, setName)
