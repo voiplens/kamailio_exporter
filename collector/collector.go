@@ -225,7 +225,7 @@ func getRecords(conn net.Conn, logger log.Logger, values ...string) ([]binrpc.Re
 	}
 
 	records, err := binrpc.ReadPacket(conn, cookie)
-	if err != nil || len(records) == 0 {
+	if err != nil {
 		level.Error(logger).Log("msg", "Can not fetch", "cmd", values[0], "err", err)
 		return nil, err
 	}
