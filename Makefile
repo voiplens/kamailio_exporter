@@ -11,6 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+DOCKER_ARCHS ?= amd64 arm64
+DOCKER_REPO  ?= ghcr.io/angarium-cloud
+
 include Makefile.common
 
 DOCKER_IMAGE_NAME       ?= kamailio-exporter
