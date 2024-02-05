@@ -8,25 +8,28 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.21
 
-    - name: Prepare 
-      run: make promu
+      - name: Prepare
+        run: make promu
 
-    - name: Build
-      run: promu crossbuild -v
+      - name: Test and build
+        run: make
 
-    - name: Archive production artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: binaries
-        path: .build/
+      - name: Build
+        run: promu crossbuild -v
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries
+          path: .build/
