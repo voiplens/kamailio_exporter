@@ -31,6 +31,9 @@ jobs:
       - name: Test and build
         run: make
 
+      - name: Build
+        run: promu crossbuild
+
       - name: Build tarballs
         run: promu crossbuild tarballs
 
