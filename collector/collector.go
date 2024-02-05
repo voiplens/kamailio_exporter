@@ -148,7 +148,10 @@ func (n KamailioCollector) Collect(ch chan<- prometheus.Metric) {
 		return
 	}
 
-	conn.SetDeadline(time.Now().Add(n.timeout))
+	err = conn.SetDeadline(time.Now().Add(n.timeout))
+	if err != nil {
+		level.Error(n.logger).Log("msg", "Can not set deadline", "err", err)
+	}
 	defer conn.Close()
 
 	runtimeMethods, err := listMethods(conn, ch, n.logger)

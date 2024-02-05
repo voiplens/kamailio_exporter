@@ -136,7 +136,10 @@ func main() {
 					http.StatusInternalServerError)
 				return
 			}
-			w.Write(resp2)
+			_, err = w.Write(resp2)
+			if err != nil {
+				level.Warn(logger).Log("msg", "Error writing response", "err", err)
+			}
 		})
 	}
 
