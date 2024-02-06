@@ -1,0 +1,10 @@
+name: Org Repository Banner Workflow
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  generate:
+    uses: angarium-cloud/.github/.github/workflows/repo-banner.yml@main
