@@ -4,12 +4,12 @@ go 1.21
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/florentchauveau/go-kamailio-binrpc/v3 v3.2.0
 	github.com/go-kit/log v0.2.1
 	github.com/prometheus/client_golang v1.18.0
 	github.com/prometheus/client_model v0.5.0
 	github.com/prometheus/common v0.46.0
 	github.com/prometheus/exporter-toolkit v0.11.0
+	go.angarium.io/kamailio v0.1.0
 )
 
 require (

@@ -28,10 +28,10 @@ import (
 	"strconv"
 	"strings"
 
-	binrpc "github.com/florentchauveau/go-kamailio-binrpc/v3"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.angarium.io/kamailio/binrpc"
 )
 
 func init() {
