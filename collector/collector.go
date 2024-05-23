@@ -33,7 +33,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.angarium.io/kamailio/binrpc"
+	"go.voiplens.io/kamailio/binrpc"
 )
 
 // Exporter namespace.

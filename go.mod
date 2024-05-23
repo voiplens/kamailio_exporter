@@ -1,6 +1,6 @@
-module github.com/angarium-cloud/kamailio_exporter
+module github.com/voiplens/kamailio_exporter
 
-go 1.21
+go 1.22
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/client_model v0.5.0
 	github.com/prometheus/common v0.46.0
 	github.com/prometheus/exporter-toolkit v0.11.0
-	go.angarium.io/kamailio v0.1.0
+	go.voiplens.io/kamailio v0.2.0
 )
 
 require (
