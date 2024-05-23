@@ -12,7 +12,7 @@
 # limitations under the License.
 
 DOCKER_ARCHS ?= amd64 arm64
-DOCKER_REPO  ?= ghcr.io/angarium-cloud
+DOCKER_REPO  ?= ghcr.io/voiplens
 
 include Makefile.common
 

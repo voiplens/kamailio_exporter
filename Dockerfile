@@ -1,7 +1,7 @@
 ARG ARCH="amd64"
 ARG OS="linux"
 FROM quay.io/prometheus/busybox-${OS}-${ARCH}:latest
-LABEL maintainer="The Angarium dev team <exporter-developers@angarium.io>"
+LABEL maintainer="The Angarium dev team <exporter-developers@voiplens.io>"
 
 ARG ARCH="amd64"
 ARG OS="linux"

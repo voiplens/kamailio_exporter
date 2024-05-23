@@ -1,8 +1,8 @@
 go:
-  version: 1.21
+  version: 1.22
 
 repository:
-  path: github.com/angarium-cloud/kamailio_exporter
+  path: github.com/voiplens/kamailio_exporter
 build:
   flags: -a -tags netgo
   ldflags: |

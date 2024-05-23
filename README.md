@@ -1,10 +1,10 @@
 # Prometheus Exporter for Kamailio
 
-[![Project Banner](.github/banner.png?raw=true)](https://angarium.io)
+[![Project Banner](.github/banner.png?raw=true)](https://voiplens.io)
 
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://github.com/angarium-cloud/kamailio_exporter/blob/master/LICENSE.txt)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/angarium-cloud/kamailio_exporter/build.yml?style=for-the-badge)
-![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/angarium-cloud/kamailio_exporter?style=for-the-badge)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://github.com/voiplens/kamailio_exporter/blob/master/LICENSE.txt)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/voiplens/kamailio_exporter/build.yml?style=for-the-badge)
+![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/voiplens/kamailio_exporter?style=for-the-badge)
 
 A Prometheus exporter for [Kamailio](https://www.kamailio.org/) which exports the following metrics:
 
@@ -510,7 +510,7 @@ To build the Kamailio Exporter from source code, you need a working Go developme
 Start by cloning the repository:
 
 ```sh
-git clone https://github.com/angarium-cloud/kamailio_exporter.git
+git clone https://github.com/voiplens/kamailio_exporter.git
 cd kamailio_exporter
 ```
 

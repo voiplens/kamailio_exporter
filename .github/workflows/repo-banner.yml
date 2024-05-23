@@ -9,4 +9,4 @@ jobs:
   generate:
     permissions:
       contents: write
-    uses: angarium-cloud/.github/.github/workflows/repo-banner.yml@main
+    uses: voiplens/.github/.github/workflows/repo-banner.yml@main
