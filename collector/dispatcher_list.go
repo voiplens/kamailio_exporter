@@ -232,12 +232,12 @@ func parseDestinations(setID int, destinations []binrpc.StructItem) ([]Dispatche
 					return nil, err
 				}
 			case "ATTRS":
-				err := parseDestinationAttributes(prop, target)
+				err := parseDestinationAttributes(prop, &target)
 				if err != nil {
 					return nil, err
 				}
 			case "LATENCY":
-				err := parseDestinationLatency(prop, target)
+				err := parseDestinationLatency(prop, &target)
 				if err != nil {
 					return nil, err
 				}
@@ -249,7 +249,7 @@ func parseDestinations(setID int, destinations []binrpc.StructItem) ([]Dispatche
 	return targets, nil
 }
 
-func parseDestinationLatency(prop binrpc.StructItem, target DispatcherTarget) error {
+func parseDestinationLatency(prop binrpc.StructItem, target *DispatcherTarget) error {
 	latency, err := prop.Value.StructItems()
 	if err != nil {
 		return err
@@ -271,7 +271,7 @@ func parseDestinationLatency(prop binrpc.StructItem, target DispatcherTarget) er
 	return nil
 }
 
-func parseDestinationAttributes(prop binrpc.StructItem, target DispatcherTarget) error {
+func parseDestinationAttributes(prop binrpc.StructItem, target *DispatcherTarget) error {
 	attrs, err := prop.Value.StructItems()
 	if err != nil {
 		return err
