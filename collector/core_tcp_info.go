@@ -35,8 +35,6 @@ func init() {
 type coreTCPInfoCollector struct {
 	tcpReaders        *prometheus.Desc
 	tcpMaxConnections *prometheus.Desc
-	tlsMaxConnections *prometheus.Desc
-	tlsConnections    *prometheus.Desc
 	logger            log.Logger
 	config            *KamailioCollectorConfig
 }
@@ -51,14 +49,6 @@ func NewCoreTCPInfoCollector(config *KamailioCollectorConfig, logger log.Logger)
 		tcpMaxConnections: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", "tcp_max_connections"),
 			"TCP connection limit",
-			[]string{}, nil),
-		tlsMaxConnections: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "tls_max_connections"),
-			"TLS connection limit",
-			[]string{}, nil),
-		tlsConnections: prometheus.NewDesc(
-			prometheus.BuildFQName(namespace, "", "tls_connections"),
-			"Opened TLS connections",
 			[]string{}, nil),
 		config: config,
 		logger: logger,
@@ -82,12 +72,6 @@ func (c *coreTCPInfoCollector) Update(conn net.Conn, metricChannel chan<- promet
 		case "max_connections":
 			v, _ = item.Value.Int()
 			metricChannel <- prometheus.MustNewConstMetric(c.tcpMaxConnections, prometheus.GaugeValue, float64(v))
-		case "max_tls_connections":
-			v, _ = item.Value.Int()
-			metricChannel <- prometheus.MustNewConstMetric(c.tlsMaxConnections, prometheus.GaugeValue, float64(v))
-		case "opened_tls_connections":
-			v, _ = item.Value.Int()
-			metricChannel <- prometheus.MustNewConstMetric(c.tlsConnections, prometheus.GaugeValue, float64(v))
 		}
 	}
 	return nil
